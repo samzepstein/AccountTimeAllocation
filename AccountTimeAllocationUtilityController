@@ -1,0 +1,50 @@
+public with sharing class AccountTimeAllocationUtilityController {
+
+    @AuraEnabled(cacheable=true)
+    public static List<Account> getAccounts() {
+
+    return [
+    SELECT
+    Id,
+    Name,
+    FLEXE_Priority__c
+    FROM Account
+    WHERE
+    Primary_Operations_Coordinator__c = :UserInfo.getUserID()
+    ORDER BY Name
+    ];
+    }
+
+    @AuraEnabled(cacheable=true)
+    public static List<Account> getAccountFromSearch(String Id) {
+      return [
+        SELECT
+          Id,
+          Name,
+          FLEXE_Priority__c
+        FROM Account
+        WHERE Id = :Id
+        ORDER BY Name
+      ];
+    }
+
+
+    @AuraEnabled
+    public static string createTimeTrackers(Object data) {
+      List<Time_Tracker__c> timeTrackers = (List<Time_Tracker__c>) JSON.deserialize(
+        JSON.serialize(data),
+        List<Time_Tracker__c>.class
+      );
+      try {
+        insert timeTrackers;
+        return 'Success: Time Tracker records created successfully';
+      } catch (Exception e) {
+        return 'The following exception has occurred: ' + e.getMessage();
+      }
+    }
+
+}
+
+
+    
+
