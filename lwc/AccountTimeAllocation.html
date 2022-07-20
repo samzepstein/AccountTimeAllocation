@@ -1,0 +1,193 @@
+<template>
+  <lightning-card title="Accounts" class="slds-m-around_small">
+    <lightning-layout>
+      <lightning-layout-item size="2" class="slds-m-horizontal_x-small">
+        <lightning-radio-group
+          name="radioGroup"
+          label="Accounts to Display"
+          options={radioOptions}
+          value={radioSelection}
+          required
+          type="button"
+          onchange={handleRadioChange}
+        ></lightning-radio-group>
+      </lightning-layout-item>
+      <lightning-layout-item size="2" class="slds-m-horizontal_x-small">
+        <c-custom-lookup-lwc
+          icon-name="standard:account"
+          s-object-api-name="account"
+          label="Selected Account"
+          onlookupupdate={accountLookup}
+          default-record-id=""
+          placeholder="type here..."
+          disabled={disableAccountLookup}
+        ></c-custom-lookup-lwc>
+      </lightning-layout-item>
+    </lightning-layout>
+    <div class="slds-m-around_medium">
+      <template if:true={workingList}>
+        <div class="slds-scrollable_y" style="height: 450px">
+          <c-custom-data-table
+            key-field="tableKey"
+            data={workingList}
+            columns={columns}
+            onpicklistchanged={picklistChanged}
+            draft-values={draftValues}
+            oncellchange={handleCellChange}
+            onsave={handleSave}
+            oncancel={handleCancel}
+            hide-checkbox-column
+            suppress-bottom-bar
+            onsort={updateColumnSorting}
+            sorted-by={sortBy}
+            sorted-direction={sortDirection}
+            onrowaction={handleMainRowAction}
+          >
+          </c-custom-data-table>
+        </div>
+      </template>
+      <template if:true={error}>
+        <!-- handle Apex error -->
+      </template>
+    </div>
+    <lightning-layout horizontal-align="end">
+      <lightning-layout-item>
+        <lightning-button
+          variant="brand"
+          label="Stage Pending Records"
+          title="Clicking"
+          onclick={handleSave}
+          class="slds-m-vertical_x-small slds-m-horizontal_x-small slds-float_right"
+          disabled={disableStage}
+        ></lightning-button>
+        <lightning-button
+          label="Clear Worksheet"
+          title="Clicking"
+          onclick={handleCancel}
+          class="slds-m-vertical_x-small slds-float_right"
+        ></lightning-button>
+        <template if:true={showWarning}>
+          <div
+            class="slds-text-color_error slds-m-top_small slds-m-horizontal_small slds-float_right"
+          >
+            <lightning-formatted-text
+              value="Don't forget to hit 'Create Records' below to save your staged records to Salesforce!"
+            ></lightning-formatted-text>
+          </div>
+        </template>
+      </lightning-layout-item>
+    </lightning-layout>
+  </lightning-card>
+  <lightning-card
+    title="Pending Time Tracker Records"
+    class="slds-m-around_small"
+  >
+    <div class="slds-m-around_medium">
+      <template if:true={pendingValues}>
+        <div class="slds-scrollable_y" style="height: 250px">
+          <template if:true={showSpinner}>
+            <div class="slds-spinner_container">
+              <div
+                role="status"
+                class="slds-spinner slds-spinner_medium slds-spinner_brand"
+              >
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+              </div>
+            </div>
+          </template>
+          <lightning-datatable
+            key-field="tableKey"
+            data={pendingValues}
+            columns={pvColumns}
+            onrowaction={handleStageRowAction}
+            hide-checkbox-column
+          >
+          </lightning-datatable>
+        </div>
+      </template>
+      <template if:true={error}>
+        <!-- handle Apex error -->
+      </template>
+    </div>
+    <lightning-layout horizontal-align="end">
+      <lightning-layout-item>
+        <lightning-button
+          variant="brand"
+          label="Create Time Tracker Records"
+          title="Clicking"
+          onclick={handleSubmit}
+          class="slds-m-vertical_x-small slds-m-horizontal_x-small slds-float_right"
+          disabled={disableCreate}
+        ></lightning-button>
+        <lightning-button
+          label="Clear All Pending Records"
+          title="Clicking"
+          onclick={handlePendingClear}
+          class="slds-m-vertical_x-small slds-float_right"
+        ></lightning-button>
+      </lightning-layout-item>
+    </lightning-layout>
+  </lightning-card>
+  <template if:true={isModalOpen}>
+    <section
+      role="dialog"
+      tabindex="-1"
+      aria-labelledby="modal-heading-01"
+      aria-modal="true"
+      aria-describedby="modal-content-id-1"
+      class="slds-modal slds-fade-in-open"
+    >
+      <div class="slds-modal__container">
+        <header class="slds-modal__header">
+          <button
+            class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+            title="Close"
+            onclick={closeModal}
+          >
+            <lightning-icon
+              icon-name="utility:close"
+              alternative-text="close"
+              variant="inverse"
+              size="small"
+            ></lightning-icon>
+            <span class="slds-assistive-text">Close</span>
+          </button>
+          <h2
+            id="modal-heading-01"
+            class="slds-text-heading_medium slds-hyphenate"
+          >
+            Are You Sure?
+          </h2>
+        </header>
+        <div
+          class="slds-modal__content slds-p-around_medium"
+          id="modal-content-id-1"
+        >
+          You have worksheet changes or pending contract status records that
+          have been staged but not submitted. Changing the Contract source will
+          discard your work.
+        </div>
+        <!-- Modal/Popup Box LWC footer starts here -->
+        <footer class="slds-modal__footer">
+          <button
+            class="slds-button slds-button_neutral"
+            onclick={closeModal}
+            title="Cancel"
+          >
+            Cancel, Go Back
+          </button>
+          <button
+            class="slds-button slds-button_brand"
+            onclick={processRadioChange}
+            title="OK"
+          >
+            OK, Discard Pending Records
+          </button>
+        </footer>
+      </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+  </template>
+</template>
